@@ -19,9 +19,15 @@ create_status_display <- function(status, count, colour) {
 create_waffle_plot <- function(dt, y, col) {
   data_tmp <- dt[year == y]
   # Set outcome as factor with all expected levels
-  data_tmp[, outcome := factor(outcome, levels = names(col))]
+  #data_tmp[, outcome := factor(outcome, levels = names(col))]
+  # Set levels in desired visual bottom-to-top order
+  lvl <- c("Transplanted", "Waiting", "Died", "Removed")
+  data_tmp[, outcome := factor(outcome, levels = lvl)]
+
+  # Order so that first row = bottom row of waffle
+  setorder(data_tmp, outcome)
+
   # reverse the factors such that transplant is at the bottom of the icon plots
-  setorder(data_tmp, -outcome)
   ggplot(data_tmp, aes(fill = outcome, values = count)) +
     geom_waffle(aes(color = outcome), n_rows = 10, make_proportional = TRUE, flip = TRUE) +
     scale_fill_manual(values = col) +
