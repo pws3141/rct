@@ -8,6 +8,7 @@ library(waffle)
 library(ggrepel)
 library(grid) # for 'rectGrob'
 library(gridExtra) # for 'arrangeGrob' and 'grid.arrange'
+library(gt)
 
 # load 'plot_functions.R' file
 source("./R/plot_functions.R")
@@ -96,8 +97,8 @@ ui <- fluidPage(
              tabPanel("Bar Chart", withSpinner(uiOutput("barPlotUI"))),
              tabPanel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
              tabPanel("Icon Display", withSpinner(uiOutput("iconPlotUI", height = "600px"))),
-             tabPanel("Table", "Hello!"),
-             tabPanel("Test", "Hello! :)")
+             tabPanel("Table", gt_output("table")),
+             tabPanel("Text", "Hello! :)")
            )
     )
   )
@@ -224,6 +225,29 @@ server <- function(input, output) {
       ]
   })
 
+  kidney_table <- reactive({
+    # don't create until kidney_data() has been created
+    req(kidney_outcomes())
+    
+    kidney_table <- dcast(kidney_outcomes(), outcome ~ year, value.var = 'proportion')
+    kidney_table[, outcome_order := fcase(
+      outcome == "Removed", 3,
+      outcome == "Died", 4,
+      outcome == "Waiting", 1,
+      outcome == "Transplanted", 2
+    )]
+    setorder(kidney_table, outcome_order)
+  
+    # add the phrase column
+    kidney_table[, phrase := fcase(
+      outcome == "Removed",      "have been removed from the list",
+      outcome == "Died",         "have died",
+      outcome == "Waiting",      "are still waiting",
+      outcome == "Transplanted", "have been transplanted"
+    )]
+    kidney_table
+  })
+  
   # pop-up to show factors that have not been considered
   modal_confirm <- modalDialog(
     factors_not_included,
@@ -459,6 +483,30 @@ server <- function(input, output) {
       nrow = 2,
       heights = unit(c(1, 3), "null")
     )
+  })
+  
+  output$table <- render_gt({
+    kidney_table() |>
+      gt() |>
+      ## format the three year-columns as % (underlying values stay numeric)
+      fmt_percent(
+        columns      = c(`1`, `3`, `5`),
+        decimals     = 1,
+        scale_values = TRUE          # multiply by 100
+      ) |>
+      ## first col of 'cols_merge' is the target colmns
+      cols_merge(columns = c(`1`, phrase), pattern = "{1} {2}") |>
+      cols_merge(columns = c(`3`, phrase), pattern = "{1} {2}") |>
+      cols_merge(columns = c(`5`, phrase), pattern = "{1} {2}") |>
+      cols_hide(columns = c(outcome, outcome_order, phrase)) |>
+      ## relabel headers, add title, etc.
+      cols_label(
+        `1` = md("**By the end of year 1**"),
+        `3` = md("**By the end of year 3**"),
+        `5` = md("**By the end of year 5**")
+      ) |>
+      cols_align(align = 'left') |>
+      tab_header(title = "Outcomes after listing for a kidney transplant") 
   })
   
 }
