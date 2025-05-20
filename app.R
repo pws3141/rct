@@ -9,19 +9,14 @@ library(ggrepel)
 library(grid) # for 'rectGrob'
 library(gridExtra) # for 'arrangeGrob' and 'grid.arrange'
 library(gt)
+library(gtExtras)
 
-# load 'plot_functions.R' file
-source("./R/plot_functions.R")
+# load functions and prerequisites
+source("./functions/plot_functions.R")
+source("./functions/prereqs.R")
 
 # ---- Load Synthetic Data ----
 kidney <- readRDS("./data/kidney.rds")
-
-colours <- c(
-  "Waiting" = "#66CCEE",
-  "Removed" = "#DDCC77",
-  "Died" = "#BBBBBB",
-  "Transplanted" = "#228833"
-)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -30,6 +25,10 @@ ui <- fluidPage(
   
   # Two columns layout
   fluidRow(
+    
+    ##############################################.
+    # KIDNEY, WAITING TIMES, PAGE ----
+    ##############################################.
     column(4,
            # Informational text
            h2("Enter details about the patient."),
@@ -97,156 +96,20 @@ ui <- fluidPage(
              tabPanel("Bar Chart", withSpinner(uiOutput("barPlotUI"))),
              tabPanel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
              tabPanel("Icon Display", withSpinner(uiOutput("iconPlotUI", height = "600px"))),
-             tabPanel("Table", gt_output("table")),
+             tabPanel("Table", withSpinner(uiOutput("tableUI"))),
              tabPanel("Text", "Hello! :)")
            )
     )
   )
 )
 
-# factors considered text:
-factors_not_included <- HTML("
-<strong>Recipient BMI</strong> – Tested and not found to be significant in the model.<br><br>
-
-<strong>Creatinine</strong> – The kidney function of donor is available but not
-included. This is because it's not possible to know how many were on titration in
-ITU. This would give a falsely low creatinine and potentially be misleading.<br><br>
-
-<strong>Comorbidities (cardiovascular disease, vascular disease, stroke,
-MI)</strong> – Not collected, looked into those that are, have a high proportion of
-missing data.<br><br>
-
-<strong>Time on dialysis</strong> – Recipient waiting time (years). Time waiting on
-deceased donor kidney waiting list until time of transplant (active and suspended).
-This can serve as a proxy for 'time on dialysis' as most patients are either already
-on dialysis or due to commence dialysis within 6 months at the time of listing for
-transplantation.")
-
-
-# Define server logic required to draw a histogram
+####################################################
+# Server
+#####################################################
 server <- function(input, output) {
-  kidney_data <- reactive({
-    # don't create until all options selected
-    req(input$age, input$sex, input$ethnicity, input$blood)
-    kidney[age_group == input$age & 
-             sex == input$sex & 
-             ethnicity == input$ethnicity &
-             blood_group == input$blood]
-  })
-  
-  kidney_ribbon <- reactive({
-    # don't create until kidney_data() has been created
-    req(kidney_data())
-    
-    kidney_ribbon <- copy(kidney_data())
-    setorder(kidney_ribbon, waittime)
-    # Calculate cumulative proportions
-    kidney_ribbon[, txd_cum := cumsum(txd) / .N]
-    kidney_ribbon[, remove_cum := cumsum(remove) / .N]
-    kidney_ribbon[, death_cum := cumsum(death) / .N]
-    kidney_ribbon[, waiting_cum := 1 - (txd_cum + remove_cum + death_cum)]
-    
-    # Create long-format ribbon data
-    kidney_ribbon <- rbindlist(list(
-      data.table(waittime_year = kidney_ribbon$waittime_year,
-                 ymin = 0,
-                 ymax = kidney_ribbon$txd_cum,
-                 outcome = "Transplanted"),
-      data.table(waittime_year = kidney_ribbon$waittime_year,
-                 ymin = kidney_ribbon$txd_cum,
-                 ymax = kidney_ribbon$txd_cum + kidney_ribbon$waiting_cum,
-                 outcome = "Waiting"),
-      data.table(waittime_year = kidney_ribbon$waittime_year,
-                 ymin = kidney_ribbon$txd_cum + kidney_ribbon$waiting_cum,
-                 ymax = 1 - kidney_ribbon$remove_cum,
-                 outcome = "Died"),
-      data.table(waittime_year = kidney_ribbon$waittime_year,
-                 ymin = 1 - kidney_ribbon$remove_cum,
-                 ymax = 1,
-                 outcome = "Removed")
-    ))[, outcome := factor(outcome,
-                           levels = c("Removed", "Died", "Waiting", "Transplanted"))]
-    
-    # find values closest to year 5, and change them to be exactly 5
-    rows_to_update <- kidney_ribbon[waittime_year <= 5, .I[which.max(waittime_year)], by = outcome]$V1
-    # Set waittime_year := 5 in those rows
-    kidney_ribbon[rows_to_update, waittime_year := 5]
-    kidney_ribbon
-  })
-  
-  kidney_outcomes <- reactive({
-    # don't create until kidney_data() has been created
-    req(kidney_data())
-    
-    copy(kidney_data())[
-      , `:=`(
-        year_1 = waittime_year <= 1,
-        year_3 = waittime_year <= 3,
-        year_5 = waittime_year <= 5
-      )
-    ][
-      , .(
-        # Prop of txd, died, removed for each period
-        # Year 1
-        txd_1 = mean(year_1 & txd == 1),
-        death_1 = mean(year_1 & death == 1),
-        remove_1 = mean(year_1 & remove == 1),
-        waiting_1 = 1 - (mean(year_1 & txd == 1) + mean(year_1 & death == 1) + mean(year_1 & remove == 1)),
-        # Year 2
-        txd_3 = mean(year_3 & txd == 1),
-        death_3 = mean(year_3 & death == 1),
-        remove_3 = mean(year_3 & remove == 1),
-        waiting_3 = 1 - (mean(year_3 & txd == 1) + mean(year_3 & death == 1) + mean(year_3 & remove == 1)),
-        # Year 5
-        txd_5 = mean(year_5 & txd == 1),
-        death_5 = mean(year_5 & death == 1),
-        remove_5 = mean(year_5 & remove == 1),
-        waiting_5 = 1 - (mean(year_5 & txd == 1) + mean(year_5 & death == 1) + mean(year_5 & remove == 1))
-      )
-    ][
-      , melt(.SD, measure.vars = patterns(".*"),
-             variable.name = "name", value.name = "proportion")
-    ][
-      , c("outcome", "year") := tstrsplit(name, "_")
-    ][
-      , `:=`(
-        count = round(proportion * 100),
-        year_str = paste0(year, ifelse(year == "1", " year", " years")),
-        outcome = factor(outcome,
-                         levels = c("remove", "death", "waiting", "txd"),
-                         labels = c("Removed", "Died", "Waiting", "Transplanted"))
-      )
-    ][
-      order(outcome, year)
-    ][
-      , .(outcome, year, proportion, count, year_str)
-    ][
-      , colour := colours[as.character(outcome)]
-      ]
-  })
 
-  kidney_table <- reactive({
-    # don't create until kidney_data() has been created
-    req(kidney_outcomes())
-    
-    kidney_table <- dcast(kidney_outcomes(), outcome ~ year, value.var = 'proportion')
-    kidney_table[, outcome_order := fcase(
-      outcome == "Removed", 3,
-      outcome == "Died", 4,
-      outcome == "Waiting", 1,
-      outcome == "Transplanted", 2
-    )]
-    setorder(kidney_table, outcome_order)
-  
-    # add the phrase column
-    kidney_table[, phrase := fcase(
-      outcome == "Removed",      "have been removed from the list",
-      outcome == "Died",         "have died",
-      outcome == "Waiting",      "are still waiting",
-      outcome == "Transplanted", "have been transplanted"
-    )]
-    kidney_table
-  })
+  # Data reactives
+  source(file.path("server/kidney_data.R"), local = TRUE)$value
   
   # pop-up to show factors that have not been considered
   modal_confirm <- modalDialog(
@@ -485,6 +348,16 @@ server <- function(input, output) {
     )
   })
   
+  
+  output$tableUI <- renderUI({
+    if (any(sapply(list(input$age, input$sex, input$ethnicity, input$blood), is.null))) {
+      tags$p("Results will appear here once all inputs have been selected.", 
+             style = "color: red; font-style: italic;")
+    } else {
+      gt_output("table")
+    }
+  })
+  
   output$table <- render_gt({
     kidney_table() |>
       gt() |>
@@ -506,8 +379,36 @@ server <- function(input, output) {
         `5` = md("**By the end of year 5**")
       ) |>
       cols_align(align = 'left') |>
-      tab_header(title = "Outcomes after listing for a kidney transplant") 
-  })
+      tab_header(title = "Outcomes after listing for a kidney transplant") |>
+      tab_options(
+        # https://gt.albert-rapp.de/styling
+        data_row.padding = px(8),
+        #summary_row.padding = px(3), # A bit more padding for summaries
+        #row_group.padding = px(12)    # And even more for our groups
+        heading.align = 'left',
+        heading.padding = px(20)
+      ) |>
+      tab_style(
+        style = list(
+          cell_fill(color = colours_trans["Waiting"])
+        ),
+        locations = cells_body(
+          #columns = vars(V1, V2), # not needed if coloring all columns
+          rows = 1)
+      ) |>
+      tab_style(
+        style = list(cell_fill(color = colours_trans["Transplanted"])),
+        locations = cells_body(rows = 2)
+      ) |>
+      tab_style(
+        style = list(cell_fill(color = colours_trans["Removed"])),
+        locations = cells_body(rows = 3)
+      ) |>
+      tab_style(
+        style = list(cell_fill(color = colours_trans["Died"])),
+        locations = cells_body(rows = 4)
+      )
+  }, align = "left")
   
 }
 
