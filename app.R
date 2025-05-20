@@ -97,7 +97,7 @@ ui <- fluidPage(
              tabPanel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
              tabPanel("Icon Display", withSpinner(uiOutput("iconPlotUI", height = "600px"))),
              tabPanel("Table", withSpinner(uiOutput("tableUI"))),
-             tabPanel("Text", "Hello! :)")
+             tabPanel("Text", htmlOutput("text"))
            )
     )
   )
@@ -409,6 +409,20 @@ server <- function(input, output) {
         locations = cells_body(rows = 4)
       )
   }, align = "left")
+  
+  output$text <- renderText(
+      paste(
+        "<b>By the end of year 1 </b> <br>",
+        sprintf("Hello! %s %s %s %s", 
+                input$age, input$sex, input$ethnicity, input$blood),
+      "<br><br><b>By the end of year 3 </b> <br>",
+      sprintf("Hello! %s %s %s %s", 
+              input$age, input$sex, input$ethnicity, input$blood),
+      "<br><br><b>By the end of year 5 </b> <br>",
+      sprintf("Hello! %s %s %s %s", 
+              input$age, input$sex, input$ethnicity, input$blood)
+      )
+    )
   
 }
 
