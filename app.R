@@ -9,7 +9,7 @@ library(ggrepel)
 library(grid) # for 'rectGrob'
 library(gridExtra) # for 'arrangeGrob' and 'grid.arrange'
 library(gt)
-library(gtExtras)
+#library(gtExtras)
 
 # load functions and prerequisites
 source("./functions/plot_functions.R")
