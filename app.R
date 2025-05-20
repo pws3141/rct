@@ -8,7 +8,6 @@ library(waffle)
 library(ggrepel)
 library(grid) # for 'rectGrob'
 library(gridExtra) # for 'arrangeGrob' and 'grid.arrange'
-install.packages("gt")
 library(gt)
 
 # load 'plot_functions.R' file
