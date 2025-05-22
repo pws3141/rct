@@ -97,7 +97,7 @@ ui <- fluidPage(
              tabPanel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
              tabPanel("Icon Display", withSpinner(uiOutput("iconPlotUI", height = "600px"))),
              tabPanel("Table", withSpinner(uiOutput("tableUI"))),
-             tabPanel("Text", htmlOutput("text"))
+             tabPanel("Text", withSpinner(uiOutput("textUI")))
            )
     )
   )
@@ -364,7 +364,7 @@ server <- function(input, output) {
       ## format the three year-columns as % (underlying values stay numeric)
       fmt_percent(
         columns      = c(`1`, `3`, `5`),
-        decimals     = 1,
+        decimals     = 0,
         scale_values = TRUE          # multiply by 100
       ) |>
       ## first col of 'cols_merge' is the target colmns
@@ -410,19 +410,47 @@ server <- function(input, output) {
       )
   }, align = "left")
   
+  output$textUI <- renderUI({
+    if (any(sapply(list(input$age, input$sex, input$ethnicity, input$blood), is.null))) {
+      tags$p("Results will appear here once all inputs have been selected.", 
+             style = "color: red; font-style: italic;")
+    } else {
+      htmlOutput("text")
+    }
+  })
   output$text <- renderText(
-      paste(
-        "<b>By the end of year 1 </b> <br>",
-        sprintf("Hello! %s %s %s %s", 
-                input$age, input$sex, input$ethnicity, input$blood),
-      "<br><br><b>By the end of year 3 </b> <br>",
-      sprintf("Hello! %s %s %s %s", 
-              input$age, input$sex, input$ethnicity, input$blood),
-      "<br><br><b>By the end of year 5 </b> <br>",
-      sprintf("Hello! %s %s %s %s", 
-              input$age, input$sex, input$ethnicity, input$blood)
-      )
+    paste(
+      "<br><b style='font-size:18px;'>By the end of year 1</b><br>",
+      sprintf("%.0f%% are still waiting <br>",
+              kidney_outcomes()[year == 1 & outcome == "Waiting", c(percent)]),
+      sprintf("%.0f%% have been transplanted <br>",
+              kidney_outcomes()[year == 1 & outcome == "Transplanted", c(percent)]),
+      sprintf("%.0f%% have been removed from the list <br>",
+              kidney_outcomes()[year == 1 & outcome == "Removed", c(percent)]),
+      sprintf("%.0f%% have died <br>",
+              kidney_outcomes()[year == 1 & outcome == "Died", c(percent)]),
+      #
+      "<br><br><b style='font-size:18px;'>By the end of year 3 </b> <br>",
+      sprintf("%.0f%% are still waiting <br>",
+              kidney_outcomes()[year == 3 & outcome == "Waiting", c(percent)]),
+      sprintf("%.0f%% have been transplanted <br>",
+              kidney_outcomes()[year == 3 & outcome == "Transplanted", c(percent)]),
+      sprintf("%.0f%% have been removed from the list <br>",
+              kidney_outcomes()[year == 3 & outcome == "Removed", c(percent)]),
+      sprintf("%.0f%% have died <br>",
+              kidney_outcomes()[year == 3 & outcome == "Died", c(percent)]),
+      #
+      "<br><br><b style='font-size:18px;'>By the end of year 5 </b> <br>",
+      sprintf("%.0f%% are still waiting <br>",
+              kidney_outcomes()[year == 5 & outcome == "Waiting", c(percent)]),
+      sprintf("%.0f%% have been transplanted <br>",
+              kidney_outcomes()[year == 5 & outcome == "Transplanted", c(percent)]),
+      sprintf("%.0f%% have been removed from the list <br>",
+              kidney_outcomes()[year == 5 & outcome == "Removed", c(percent)]),
+      sprintf("%.0f%% have died <br>",
+              kidney_outcomes()[year == 5 & outcome == "Died", c(percent)])
     )
+  )
   
 }
 

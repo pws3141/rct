@@ -94,6 +94,8 @@ kidney_outcomes <- reactive({
   ][
     , .(outcome, year, proportion, count, year_str)
   ][
+    , percent := proportion * 100
+  ][
     , colour := colours[as.character(outcome)]
   ]
 })
