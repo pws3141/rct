@@ -3,7 +3,7 @@
 ## Bar Plot
 
 # ---- Create Bar Plot ----
-create_bar_plot <- function(plot.data) {
+create_bar_plot <- function(plot.data, label.data) {
   ggplot(plot.data, aes(x = year, y = proportion, fill = outcome)) +
   geom_col(width = 0.8)  +
   geom_label_repel( # add percentage labels for each section of box plot
@@ -21,7 +21,7 @@ create_bar_plot <- function(plot.data) {
   scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
   scale_fill_manual(values = colours) +
   geom_text_repel(# add legend labels on last bar
-    data = dt_labels,
+    data = label.data,
     aes(x = year, y = ypos, label = outcome, color = outcome),
     inherit.aes = FALSE,
     hjust = 0,
@@ -58,6 +58,74 @@ create_bar_plot <- function(plot.data) {
     # increase right-hand margin
     plot.margin = margin(t = 0, r = 90, b = 0, l = 0, unit = "pt")
   )
+}
+
+## Area Chart 
+
+# ---------------------- Area Chart plot -----------------------
+create_area_chart <- function(plot.data, label.data) {
+  ggplot(plot.data, aes(x = waittime_year, ymin = ymin, ymax = ymax, fill = outcome)) +
+    geom_ribbon() +
+    scale_fill_manual(values = colours) +
+    scale_color_manual(values = colours) +
+    geom_segment(data = data.table(x = c(1, 3, 5)),
+                 aes(x = x, xend = x, y = 0, yend = 1),
+                 inherit.aes = FALSE,
+                 colour = "grey60",
+                 linetype = "solid") +
+    ylim(0, 1) +
+    geom_label_repel( # add percentages at yrs 1, 3, 5
+      data = label.data,
+      aes(x = xpos, y = ypos, label = label, fill = outcome),
+      colour = "black",
+      inherit.aes = FALSE,
+      size = 6,
+      direction = "both",
+      segment.color = NA,
+      max.overlaps = Inf
+    ) +
+    geom_text_repel( # add outcome labels on RH side
+      data = label.data[year == 5],
+      aes(x = xpos, y = ypos, label = outcome, color = outcome),
+      inherit.aes = FALSE,
+      xlim = c(5.3, 7),
+      size = 7,
+      fontface = "bold",
+      direction = "y",
+      segment.color = NA,
+      max.overlaps = Inf
+    ) +
+    labs(caption = "Outcomes after listing for a kidney transplant"#,
+         #x = "Wait time (years)", 
+         #y = "Cumulative proportion", 
+         #fill = "Outcome"
+    ) +
+    scale_x_continuous(
+      limits = c(0, 5),
+      breaks = c(1, 3, 5),
+      labels = function(x) paste("End of year", x)
+    ) +
+    coord_cartesian(clip = "off") +   
+    theme_minimal() +
+    theme(
+      axis.text.x = element_text(angle = 0, 
+                                 margin = margin(t = -7, b = 10), 
+                                 size = 14,
+                                 face = "bold"),
+      legend.position = "none",
+      # remove x axis ticks
+      axis.ticks.x = element_blank(),
+      # remove x-axis and y-axis title
+      axis.title = element_blank(),
+      # remove y-axis labels
+      axis.text.y = element_blank(),
+      # change plot.caption to left alligned
+      plot.caption = element_text(hjust = 0, size = 14, face = "bold"),
+      # remove grid lines
+      panel.grid = element_blank(),
+      # increase right-hand margin
+      plot.margin = margin(t = 0, r = 200, b = 0, l = 0, unit = "pt")
+    )
 }
 
 ## Icon plot

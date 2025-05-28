@@ -1,4 +1,5 @@
 library(shiny)
+library(bslib)
 library(shinyWidgets)
 library(shinycssloaders)
 library(data.table)
@@ -18,96 +19,85 @@ source("./functions/prereqs.R")
 # ---- Load Synthetic Data ----
 kidney <- readRDS("./data/kidney.rds")
 
-# Define UI for application that draws a histogram
-ui <- fluidPage(
-  # Application title
-  titlePanel("Waiting Times"),
+ui <- page_sidebar(
+  theme = bs_theme(version = 5),
+  # Header area
+  title = "Kidney Waiting Times",   # Appears at the top of the page
+  window_title = "Risk Communication Tool", # Shows in the browser tab
   
-  # Two columns layout
-  fluidRow(
+  # Sidebar area
+  sidebar = sidebar(
+    title = "Enter details about the patient",
+    # Informational text
+    p("Other things might influence these results, for example other health conditions."),
+    p("The tool cannot take into account all these factors."),
+    p("The tool uses data collected by NHSBT. Some data that is collected has not been used in the tool."),
+    p("Changes to the kidney offering scheme in September 2019 are not yet reflected in the tool."),
+    # create action button with blue background
+    actionButton("factors", "Show factors considered but not included",
+                 icon = icon("info"), 
+                 style = "color: #fff; background-color: #337ab7; border-color: #337ab7"),
+    # add vertical space
+    #tags$br(), tags$br(),
     
-    ##############################################.
-    # KIDNEY, WAITING TIMES, PAGE ----
-    ##############################################.
-    column(4,
-           # Informational text
-           h2("Enter details about the patient."),
-           p("Other things might influence these results, for example other health conditions."),
-           p("The tool cannot take into account all these factors."),
-           p("The tool uses data collected by NHSBT. Some data that is collected has not been used in the tool."),
-           p("Changes to the kidney offering scheme in September 2019 are not yet reflected in the tool."),
-           
-           # create action button with blue background
-           actionButton("factors", "Show factors considered but not included",
-                        icon = icon("info"), 
-                        style = "color: #fff; background-color: #337ab7; border-color: #337ab7"),
-           
-           # add vertical space
-           tags$br(), tags$br(),
-           
-           # create action button with red background
-           actionButton("reset", "Reset all",
-                        icon = icon("redo"), 
-                        style = "color: #fff; background-color: #d9534f; border-color: #d9534f"),
-           
-           # add vertical space
-           tags$br(),
-           
-           radioGroupButtons(
-             inputId = "age",
-             label = "Age", 
-             choices = c("18-29", "30-39", "40-49", "50-59", "60-69", "70+"),
-             selected = character(0),
-             justified = TRUE
-           ),
-           
-           radioGroupButtons(
-             inputId = "sex",
-             label = "Sex", 
-             choices = c("Male", "Female"),
-             selected = character(0),
-             justified = TRUE
-           ),
-           
-           radioGroupButtons(
-             inputId = "ethnicity",
-             label = "Ethnicity", 
-             choices = c("White", "Mixed", "Asian", "Black", "Other"),
-             selected = character(0),
-             justified = TRUE
-           ),
-           
-           radioGroupButtons(
-             inputId = "blood",
-             label = "Blood Group", 
-             choices = c("O", "A", "B", "AB"),
-             selected = character(0),
-             justified = TRUE
-           )
+    # create action button with red background
+    actionButton("reset", "Reset all",
+                 icon = icon("redo"), 
+                 style = "color: #fff; background-color: #d9534f; border-color: #d9534f"),
+    #
+    radioGroupButtons(
+      inputId = "age",
+      label = "Age", 
+      choices = c("18-29", "30-39", "40-49", "50-59", "60-69", "70+"),
+      selected = character(0),
+      justified = TRUE
     ),
-    column(8,
-           # Informational text
-           h2("What might happen if you are listed for a transplant?"),
-           p("The results below show what happened to people like you in the past. 
+    
+    radioGroupButtons(
+      inputId = "sex",
+      label = "Sex", 
+      choices = c("Male", "Female"),
+      selected = character(0),
+      justified = TRUE
+    ),
+    
+    radioGroupButtons(
+      inputId = "ethnicity",
+      label = "Ethnicity", 
+      choices = c("White", "Mixed", "Asian", "Black", "Other"),
+      selected = character(0),
+      justified = TRUE
+    ),
+    
+    radioGroupButtons(
+      inputId = "blood",
+      label = "Blood Group", 
+      choices = c("O", "A", "B", "AB"),
+      selected = character(0),
+      justified = TRUE
+    ),
+    #
+    #selectInput("example", "Choose an option:", c("A", "B", "C")),
+    width = 700
+  ),
+  
+  # Main content area
+  # Informational text
+  h2("What might happen if you are listed for a transplant?"),
+  p("The results below show what happened to people like you in the past. 
              It is not a prediction of what will happen in the future."),
-           p("There are many factors that can influence these results and make the numbers higher or lower for you."),
-
-           tabsetPanel(
-             tabPanel("Bar Chart", withSpinner(uiOutput("barPlotUI"))),
-             tabPanel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
-             tabPanel("Icon Display", withSpinner(uiOutput("iconPlotUI", height = "600px"))),
-             tabPanel("Table", withSpinner(uiOutput("tableUI"))),
-             tabPanel("Text", withSpinner(uiOutput("textUI")))
-           )
-    )
+  p("There are many factors that can influence these results and make the numbers higher or lower for you."),
+  navset_card_tab(
+    nav_panel("Bar Chart", withSpinner(uiOutput("barPlotUI"))),
+    nav_panel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
+    nav_panel("Icon Display", withSpinner(uiOutput("iconPlotUI"))),
+    nav_panel("Table", withSpinner(uiOutput("tableUI"))),
+    nav_panel("Text", withSpinner(uiOutput("textUI"))),
+    full_screen = TRUE
   )
 )
 
-####################################################
-# Server
-#####################################################
 server <- function(input, output) {
-
   # Data reactives
   source(file.path("server/kidney_data.R"), local = TRUE)$value
   
@@ -125,7 +115,6 @@ server <- function(input, output) {
   observeEvent(input$ok, {
     removeModal()
   })
-
   # reset the radioGroupButtons when the reset button is clicked
   observeEvent(input$reset, {
     updateRadioGroupButtons(inputId = "age", selected = character(0))
@@ -133,7 +122,9 @@ server <- function(input, output) {
     updateRadioGroupButtons(inputId = "ethnicity", selected = character(0))
     updateRadioGroupButtons(inputId = "blood", selected = character(0))
   })
-
+  
+  
+  # ----------------- Bar Plot -------------------------
   output$barPlotUI <- renderUI({
     if (any(sapply(list(input$age, input$sex, input$ethnicity, input$blood), is.null))) {
       tags$p("Results will appear here once all inputs have been selected.", 
@@ -144,69 +135,18 @@ server <- function(input, output) {
   })
   
   output$barPlot <- renderPlot({
-
+    
     dt_labels <- kidney_outcomes()[year == 5][
       order(-outcome)
     ][
       , ypos := cumsum(proportion) - proportion / 2
     ]
     
-    ggplot(kidney_outcomes(), aes(x = year, y = proportion, fill = outcome)) +
-      geom_col(width = 0.8)  +
-      geom_label_repel( # add percentage labels for each section of box plot
-        aes(label = scales::percent(proportion, accuracy = 1)),
-        position = position_stack(vjust = 0.5),
-        size = 6,
-        colour = "black",
-        direction = "x",
-        box.padding = 0.5,
-        segment.color = NA,
-        min.segment.length = Inf,
-        max.overlaps = Inf
-      ) +
-      scale_x_discrete(labels = function(x) paste("By the end of year", x)) +
-      scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-      scale_fill_manual(values = colours) +
-      geom_text_repel(# add legend labels on last bar
-        data = dt_labels,
-        aes(x = year, y = ypos, label = outcome, color = outcome),
-        inherit.aes = FALSE,
-        hjust = 0,
-        direction = "y",
-        xlim = c(3.42, 5),
-        size = 7,
-        fontface = "bold",
-        min.segment.length = Inf,
-        max.overlaps = Inf
-        ) +
-      scale_color_manual(values = colours) +
-      coord_cartesian(clip = "off") +   
-      labs(caption = "Outcomes after listing for a kidney transplant",
-           #fill = "Outcome",
-           #x = "Time after listing", 
-           y = "Proportion of patients") +
-      theme_minimal() +
-      theme(
-        axis.text.x = element_text(angle = 0, 
-                                   margin = margin(t = -7, b = 10), 
-                                   size = 14,
-                                   face = "bold"),
-        legend.position = "none",
-        # remove x axis ticks
-        axis.ticks.x = element_blank(),
-        # remove x-axis and y-axis title
-        axis.title = element_blank(),
-        # remove y-axis labels
-        axis.text.y = element_blank(),
-        # change plot.caption to left alligned
-        plot.caption = element_text(hjust = 0, size = 14, face = "bold"),
-        # remove grid lines
-        panel.grid = element_blank(),
-        # increase right-hand margin
-        plot.margin = margin(t = 0, r = 90, b = 0, l = 0, unit = "pt")
-        )
+    create_bar_plot(plot.data = kidney_outcomes(), label.data = dt_labels)
+    
   })
   
+  # --------------------- Area Chart --------------------
   output$cumulativePlotUI <- renderUI({
     if (any(sapply(list(input$age, input$sex, input$ethnicity, input$blood), is.null))) {
       tags$p("Results will appear here once all inputs have been selected.", 
@@ -214,7 +154,7 @@ server <- function(input, output) {
     } else {
       plotOutput("cumulativePlot")
     }
-  })
+  }) # renderUI
   
   output$cumulativePlot <- renderPlot({
     # create years 1 3 and 5 label data
@@ -227,71 +167,11 @@ server <- function(input, output) {
     ][
       , label := scales::percent(proportion, accuracy = 1)
     ]
-    # draw the histogram with the specified number of bins
-    ggplot(kidney_ribbon(), aes(x = waittime_year, ymin = ymin, ymax = ymax, fill = outcome)) +
-      geom_ribbon() +
-      scale_fill_manual(values = colours) +
-      scale_color_manual(values = colours) +
-      geom_segment(data = data.table(x = c(1, 3, 5)),
-                   aes(x = x, xend = x, y = 0, yend = 1),
-                   inherit.aes = FALSE,
-                   colour = "grey60",
-                   linetype = "solid") +
-      ylim(0, 1) +
-      geom_label_repel( # add percentages at yrs 1, 3, 5
-        data = dt_labels,
-        aes(x = xpos, y = ypos, label = label, fill = outcome),
-        colour = "black",
-        inherit.aes = FALSE,
-        size = 6,
-        direction = "both",
-        segment.color = NA,
-        max.overlaps = Inf
-      ) +
-      geom_text_repel( # add outcome labels on RH side
-        data = dt_labels[year == 5],
-        aes(x = xpos, y = ypos, label = outcome, color = outcome),
-        inherit.aes = FALSE,
-        xlim = c(5.3, 7),
-        size = 7,
-        fontface = "bold",
-        direction = "y",
-        segment.color = NA,
-        max.overlaps = Inf
-      ) +
-      labs(caption = "Outcomes after listing for a kidney transplant"#,
-           #x = "Wait time (years)", 
-           #y = "Cumulative proportion", 
-           #fill = "Outcome"
-           ) +
-      scale_x_continuous(
-        limits = c(0, 5),
-        breaks = c(1, 3, 5),
-        labels = function(x) paste("End of year", x)
-      ) +
-      coord_cartesian(clip = "off") +   
-      theme_minimal() +
-      theme(
-        axis.text.x = element_text(angle = 0, 
-                                   margin = margin(t = -7, b = 10), 
-                                   size = 14,
-                                   face = "bold"),
-        legend.position = "none",
-        # remove x axis ticks
-        axis.ticks.x = element_blank(),
-        # remove x-axis and y-axis title
-        axis.title = element_blank(),
-        # remove y-axis labels
-        axis.text.y = element_blank(),
-        # change plot.caption to left alligned
-        plot.caption = element_text(hjust = 0, size = 14, face = "bold"),
-        # remove grid lines
-        panel.grid = element_blank(),
-        # increase right-hand margin
-        plot.margin = margin(t = 0, r = 200, b = 0, l = 0, unit = "pt")
-      )
-  })
+    # 
+    create_area_chart(plot.data = kidney_ribbon(), label.data = dt_labels)
+  }) # renderPlot
   
+  # ------------------------ Icon Plot -----------------
   output$iconPlotUI <- renderUI({
     if (any(sapply(list(input$age, input$sex, input$ethnicity, input$blood), is.null))) {
       tags$p("Results will appear here once all inputs have been selected.", 
@@ -300,9 +180,9 @@ server <- function(input, output) {
       plotOutput("iconPlot")
     }
   })
-
+  
   output$iconPlot <- renderPlot({
-    # ---- Generate Status Display Grobs for years 1, 3 and 5 ----
+    # generate Status Display Grobs for years 1, 3 and 5 
     outcome_str <- as.character(unique(kidney_outcomes()[, outcome]))
     years <- c(1, 3, 5)
     
@@ -318,7 +198,7 @@ server <- function(input, output) {
         top = "", bottom = "", left = "", right = ""
       )
     })
-    # ---- Combine Status Display Columns ----
+    # combine Status Display Columns
     combined_plot <- arrangeGrob(
       grobs = status_panels,
       ncol = 3,
@@ -326,12 +206,12 @@ server <- function(input, output) {
       top = ""
     )
     
-    # ---- Create Waffle Plots ----
+    # Create Waffle Plots
     waffle_grobs <- lapply(years, function(y) {
       create_waffle_plot(dt = kidney_outcomes(), y, col = colours)
-      })
+    })
     
-    # ---- Combine Waffle Plots ----
+    # Combine Waffle Plots 
     waffle_row <- arrangeGrob(
       grobs = waffle_grobs,
       ncol = 3,
@@ -339,7 +219,7 @@ server <- function(input, output) {
       top = ""
     )
     
-    # ---- Final Layout ----
+    # Final Layout 
     final_arrangement <- grid.arrange(
       combined_plot,
       waffle_row,
@@ -348,7 +228,7 @@ server <- function(input, output) {
     )
   })
   
-  
+  # ---------------------- Table ---------------------
   output$tableUI <- renderUI({
     if (any(sapply(list(input$age, input$sex, input$ethnicity, input$blood), is.null))) {
       tags$p("Results will appear here once all inputs have been selected.", 
@@ -410,6 +290,9 @@ server <- function(input, output) {
       )
   }, align = "left")
   
+  
+  # --------------------------- Text -----------------------------
+  
   output$textUI <- renderUI({
     if (any(sapply(list(input$age, input$sex, input$ethnicity, input$blood), is.null))) {
       tags$p("Results will appear here once all inputs have been selected.", 
@@ -452,7 +335,6 @@ server <- function(input, output) {
     )
   )
   
-}
+} # server
 
-# Run the application 
-shinyApp(ui = ui, server = server)
+shinyApp(ui, server)
