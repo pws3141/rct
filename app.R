@@ -1,5 +1,6 @@
 library(shiny)
 library(bslib)
+library(bsicons)
 library(shinyWidgets)
 library(shinycssloaders)
 library(data.table)
