@@ -50,9 +50,23 @@ homeCards <- list(
   card(card_header("What will it show?"),
        tagList(
          tags$ul(
-           tags$li("Likely waiting time"),
-           tags$li("How long the kidney might last"),
-           tags$li("How long the patient might survive after a transplant")
+         tags$li("The tool uses data from the NHSBT registry. It can only use data that is collected by NHSBT. In some cases data is not yet collected or has missing values to the extent that they cannot be included in the tool.If you want to know more about the data and models behind the tool, see the Technical section."),
+         tags$li("It cannot yet take into account everything about the patient e.g. other health conditions or about the donor e.g. DCD or DBD donors."),
+         tags$li(
+           tagList(
+             "The waiting times tool was created to be accurate at ",
+             tags$b("time of listing."),
+             "It is not accurate if it is used while the patient is on the waiting list."
+             )
+           ),
+         tags$li(
+           tagList(
+             "The survival tool was created to be accurate at ",
+             tags$b("time of transplant."),
+             "It is not accurate if it is used after transplantation."
+           )
+         ),
+         tags$li("There are many factors that influence how well a transplant does and many of those cannot be factored into the tool (yet).")
          )
        )
   )
@@ -89,10 +103,55 @@ techPanels <- list(
        p("Although the tool is based on reputable models, it cannot say what the outcomes for a particular patient will be. It can only provide a summary of survival and waiting list outcomes for people in the past with similar characteristics."),
        p("This tool has been developed using retrospective registry data. Therefore, changes to the Kidney Offering Scheme in 2019 are NOT reflected in these models."),
        p("All statistical analyses for this website were generated using SAS Enterprise Guide software, Version 7.1. SAS and all other SAS Institute Inc. product or service names are registered trademarks or trademarks of SAS Institute Inc., Cary, NC, USA.")
+  ),
+  nav_panel(title = "Input Factors", 
+            "Explanation of donor and recipient input covariates:",
+            tags$ul(
+              tags$li("Recipient age (years) - Age at point of being actively listed onto the National Kidney Transplant List. This has been divided into categories by decade."),
+              tags$li("Sex – Male or female. Note this refers to sex, not gender."),
+              tags$li("Recipient ethnicity – Asian, Black, Chinese, Mixed, White, Other."),
+              tags$li("Recipient waiting time (years) – Time waiting on deceased donor kidney waiting list until time of transplant (active and suspended). This can serve as a proxy for ‘time on dialysis’ as most patients are either already on dialysis or due to commence dialysis within 6 months at the time of listing for transplantation."),
+              tags$li("Previous Kidney Transplant? – Yes or No."),
+              tags$li("Highly sensitised (cRF >85%) – Any antibodies in the blood – e.g. as a result of pregnancy or a previous organ transplant."),
+              tags$li("Blood group – Patient’s blood group: O, A, B, AB."),
+              tags$li("Dialysis at registration – Refers to any form of dialysis (peritoneal or haemodialysis) at the time of listing for transplantation."),
+              tags$li(
+                tagList(
+                  "Matchability – Whether due to a range of factors, such as blood group, it will be ‘easy’, ‘moderate’, or ‘difficult’ to find a matching organ. The ODT provides further details on how this is calculated and a tool for calculating matchability for individual patients:",
+                  tags$a(href = "https://www.odt.nhs.uk/transplantation/tools-policies-and-guidance/calculators/", 
+                         "https://www.odt.nhs.uk/transplantation/tools-policies-and-guidance/calculators/")
+                )
+              ),
+              tags$li("Donor age – The age at which the donor donated their organs."),
+              tags$li("Donor BMI – Donor BMI as recorded at the donating hospital site. Calculated as weight (kilograms) divided by height (m²)."),
+              tags$li("Donor Hypertension – Whether the donor suffered from high blood pressure as recorded by NHSBT on data collection forms at the time of donation."),
+              tags$li("HLA MM level – Human Leukocyte Antigen (HLA) matching level. HLA are proteins located on the surface of white blood cells and other tissues. When people share the same HLA’s, they are said to be a ‘match’. There are many different types of HLA, and the matching can occur to different degrees, hence the different levels of matching."),
+              tags$li("Transplant Centre – This refers to which of the 23 UK adult kidney transplant centres the patient will be receiving their transplant. (This is not always the dialysis centre at which they are followed up).")
+            )
+  ),
+  nav_panel(title = "Mathematical Section", 
+            tagList(
+              tags$p("A Cox proportional hazards model was adopted. This multiplies a baseline cumulative hazard by a constant hazard ratio for each risk factor."),
+              tags$p("Using the example of post-transplant survival, this means that the cumulative hazard of post-transplant death is the product of two components: the baseline hazard (chances of dying for a patient with a baseline set of characteristics at time of transplant) and all the hazard ratios for the risk factors (the increased/decreased risk of death due to changes in these risk factors compared to the baseline characteristics)."),
+              tags$p("In the case of post-transplant survival, the cumulative hazard is then translated into a survival function. This is described in mathematical form below."),
+              tags$p("The estimated cumulative hazard for the \\(i^\\text{ th}\\) individual for the event of interest (e.g. death post-transplant), after \\(t\\) days has the form:"),
+              tags$p("$$H_i(t) = H_0(t) \\exp(\\beta \\cdot \\chi_i)$$"),
+              tags$p("where:"),
+              tags$ul(
+                tags$li("\\(H_0(t)\\) is estimated using the Breslow (1972) estimate."),
+                tags$li("The log hazard ratios \\(\\beta\\) are estimated by a multivariate linear regression."),
+                tags$li("\\(\\chi_i\\) represents the set of characteristics for the \\(i^\\text{ th}\\) individual.")
+              ),
+              tags$p("This can be translated into a survival function through the following equation:"),
+              tags$p("$$S_i(t) = \\exp(-H_i(t))$$"),
+              tags$p("In the case of the ‘Waiting time’ models, we apply an iterative algorithm to calculate the risks of all the competing outcomes."),
+              tags$p("The ", tags$code("phreg"), " function in SAS V.7.1 (SAS Institute, Cary, North Carolina, USA) was used to compute these estimates.")
+            )
+            
   )
 )
 
-ui <- page_navbar(
+ui <- withMathJax(page_navbar(
   theme = bs_theme(version = 5),
   # Header area
   title = "Risk Communication Tool",   # Appears at the top of the page
@@ -103,7 +162,7 @@ ui <- page_navbar(
   
   nav_panel(title = "Home",
             layout_columns(
-              col_widths = c(8, 4),
+              col_widths = c(7, 5),
               #row_heights = c(1, 2),
               homeCards[[1]],
               homeCards[[2]],
@@ -119,8 +178,12 @@ ui <- page_navbar(
   nav_panel(title = "Technical",
             navset_card_underline(
               title = "Technical Details for the Kidney Tool",
-              techPanels[[1]]
-            ) # navset_card_underline
+              techPanels[[1]],
+              techPanels[[2]],
+              techPanels[[3]]
+            ), # navset_card_underline
+            icon = bsicons::bs_icon("gear"),
+            id = "technical"
             ), # nav_panel
   
   # Kidney Waiting Time nav_panel
@@ -197,6 +260,7 @@ ui <- page_navbar(
             ), # layout_sidebar
             icon = bsicons::bs_icon("clock-history")
   ) # nav_panel kidney WT
+) 
 )
 
 server <- function(input, output) {
