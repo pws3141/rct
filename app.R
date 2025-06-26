@@ -50,7 +50,7 @@ homeCards <- list(
   card(card_header("What will it show?"),
        tagList(
          tags$ul(
-         tags$li("The tool uses data from the NHSBT registry. It can only use data that is collected by NHSBT. In some cases data is not yet collected or has missing values to the extent that they cannot be included in the tool.If you want to know more about the data and models behind the tool, see the Technical section."),
+         tags$li("The tool uses data from the NHSBT registry. It can only use data that is collected by NHSBT. In some cases data is not yet collected or has missing values to the extent that they cannot be included in the tool. If you want to know more about the data and models behind the tool, see the Technical section."),
          tags$li("It cannot yet take into account everything about the patient e.g. other health conditions or about the donor e.g. DCD or DBD donors."),
          tags$li(
            tagList(
