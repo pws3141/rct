@@ -56,106 +56,88 @@ ui <- withMathJax(page_navbar(
             id = "technical"
   ), # nav_panel
   
-  nav_menu(
-    title = "Transplant Centres",
-    !!!lapply(transplantCentres, function(centre) {
-      nav_panel(
-        title = centre,
-        card(
-          card_header(sprintf("%s Kidney Transplant Tool", centre)),
-          navset_card_tab(
-            nav_panel("Kidney Waiting Times", 
-                      layout_sidebar(
-                        sidebar = sidebar("Sidebar content here"),
-                        "Overview content for ", centre
-                      )
-            ),
-            nav_panel("Statistics", 
-                      p("Statistics content for ", centre)
-            ),
-            nav_panel("Contact", 
-                      p("Contact information for ", centre)
-            )
-          ) # navset_card_tab
-        ) # card
-      ) # nav_panel
-    })
-  ), # nav_menu
-  
-  # Kidney Waiting Time nav_panel
-  nav_panel("Kidney Waiting Times",
-            layout_sidebar(
-              sidebar = sidebar(
-                title = "Kidney Waiting Times",
-                h4("Enter details about the patient"),
-                # Informational text
-                p("Other things might influence these results, for example other health conditions."),
-                p("The tool cannot take into account all these factors."),
-                p("The tool uses data collected by NHSBT. Some data that is collected has not been used in the tool."),
-                p("Changes to the kidney offering scheme in September 2019 are not yet reflected in the tool."),
-                # create action button with blue background
-                actionButton("factors", "Show factors considered but not included",
-                             icon = icon("info"), 
-                             style = "color: #fff; background-color: #337ab7; border-color: #337ab7"),
-                # add vertical space
-                #tags$br(), tags$br(),
-                
-                # create action button with red background
-                actionButton("reset", "Reset all",
-                             icon = icon("redo"), 
-                             style = "color: #fff; background-color: #d9534f; border-color: #d9534f"),
-                #
-                radioGroupButtons(
-                  inputId = "age",
-                  label = "Age", 
-                  choices = c("18-29", "30-39", "40-49", "50-59", "60-69", "70+"),
-                  selected = character(0),
-                  justified = TRUE
-                ),
-                
-                radioGroupButtons(
-                  inputId = "sex",
-                  label = "Sex", 
-                  choices = c("Male", "Female"),
-                  selected = character(0),
-                  justified = TRUE
-                ),
-                
-                radioGroupButtons(
-                  inputId = "ethnicity",
-                  label = "Ethnicity", 
-                  choices = c("White", "Mixed", "Asian", "Black", "Other"),
-                  selected = character(0),
-                  justified = TRUE
-                ),
-                
-                radioGroupButtons(
-                  inputId = "blood",
-                  label = "Blood Group", 
-                  choices = c("O", "A", "B", "AB"),
-                  selected = character(0),
-                  justified = TRUE
-                ),
-                #
-                width = 700
-              ),
-              # Main content area
-              # Informational text
-              h2("What might happen if you are listed for a transplant?"),
-              p("The results below show what happened to people like you in the past. 
+  nav_panel(
+    title = "Dashboards",
+    navset_card_underline(
+      # Kidney Waiting Time nav_panel
+      nav_panel("Kidney Waiting Times",
+                layout_sidebar(
+                  sidebar = sidebar(
+                    title = "Kidney Waiting Times",
+                    h4("Enter details about the patient"),
+                    # Informational text
+                    p("Other things might influence these results, for example other health conditions."),
+                    p("The tool cannot take into account all these factors."),
+                    p("The tool uses data collected by NHSBT. Some data that is collected has not been used in the tool."),
+                    p("Changes to the kidney offering scheme in September 2019 are not yet reflected in the tool."),
+                    # create action button with blue background
+                    actionButton("factors", "Show factors considered but not included",
+                                 icon = icon("info"), 
+                                 style = "color: #fff; background-color: #337ab7; border-color: #337ab7"),
+                    # add vertical space
+                    #tags$br(), tags$br(),
+                    
+                    # create action button with red background
+                    actionButton("reset", "Reset all",
+                                 icon = icon("redo"), 
+                                 style = "color: #fff; background-color: #d9534f; border-color: #d9534f"),
+                    #
+                    radioGroupButtons(
+                      inputId = "age",
+                      label = "Age", 
+                      choices = c("18-29", "30-39", "40-49", "50-59", "60-69", "70+"),
+                      selected = character(0),
+                      justified = TRUE
+                    ),
+                    
+                    radioGroupButtons(
+                      inputId = "sex",
+                      label = "Sex", 
+                      choices = c("Male", "Female"),
+                      selected = character(0),
+                      justified = TRUE
+                    ),
+                    
+                    radioGroupButtons(
+                      inputId = "ethnicity",
+                      label = "Ethnicity", 
+                      choices = c("White", "Mixed", "Asian", "Black", "Other"),
+                      selected = character(0),
+                      justified = TRUE
+                    ),
+                    
+                    radioGroupButtons(
+                      inputId = "blood",
+                      label = "Blood Group", 
+                      choices = c("O", "A", "B", "AB"),
+                      selected = character(0),
+                      justified = TRUE
+                    ),
+                    #
+                    width = 700
+                  ),
+                  # Main content area
+                  # Informational text
+                  h2("What might happen if you are listed for a transplant?"),
+                  p("The results below show what happened to people like you in the past. 
                          It is not a prediction of what will happen in the future."),
-              p("There are many factors that can influence these results and make the numbers higher or lower for you."),
-              navset_card_tab(
-                nav_panel("Bar Chart", withSpinner(uiOutput("barPlotUI"))),
-                nav_panel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
-                nav_panel("Icon Display", withSpinner(uiOutput("iconPlotUI"))),
-                nav_panel("Table", withSpinner(uiOutput("tableUI"))),
-                nav_panel("Text", withSpinner(uiOutput("textUI"))),
-                full_screen = TRUE
-              )
-            ), # layout_sidebar
-            icon = bsicons::bs_icon("clock-history")
-  ), # nav_panel kidney WT
+                  p("There are many factors that can influence these results and make the numbers higher or lower for you."),
+                  navset_card_tab(
+                    nav_panel("Bar Chart", withSpinner(uiOutput("barPlotUI"))),
+                    nav_panel("Area Chart", withSpinner(uiOutput("cumulativePlotUI"))),
+                    nav_panel("Icon Display", withSpinner(uiOutput("iconPlotUI"))),
+                    nav_panel("Table", withSpinner(uiOutput("tableUI"))),
+                    nav_panel("Text", withSpinner(uiOutput("textUI"))),
+                    full_screen = TRUE
+                  )
+                ), # layout_sidebar
+                icon = bsicons::bs_icon("clock-history")
+      ), # nav_panel kidney WT
+      nav_panel("How long might the kindey last?", "TODO"),
+      nav_panel("How long might the patient survive?", "TODO")
+    ), # navset_card_tab
+    icon = bsicons::bs_icon("activity"),
+  ), # nav_panel
 
   nav_spacer(),
   nav_menu(
@@ -171,6 +153,57 @@ server <- function(input, output) {
   # Data reactives
   source(file.path("server/kidney_data.R"), local = TRUE)$value
   
+  observe({
+    if (input$main_nav == "Dashboards")  {
+      showModal(modalDialog(
+        title = "Transplant Centre",
+        div(id = "aa", style = "width: 1100px; height: 100px;", 
+            HTML("<b>Choose the transplant centre before continuing:</b>")),
+        
+        easyClose = FALSE
+      ))
+    }
+  }) |> bindEvent(input$main_nav) # observe
+    
+  
+  observe({
+    if (input$main_nav == "Dashboards")  {
+      showModal(modalDialog(
+        title = "Transplant Centre",
+        div(
+          id = "aa", 
+          style = "width: 1100px;", 
+          HTML("<b>Choose the transplant centre before continuing:</b>"),
+          br(), br(),
+          selectInput(
+            inputId = "selected_centre",
+            label = "Select Transplant Centre:",
+            choices = c("Choose a transplant centre" = "", transplantCentres),
+            selected = NULL
+          )
+        ),
+        easyClose = FALSE,
+        fade = FALSE,
+        footer = tagList(
+          #modalButton("Cancel"),
+          actionButton("confirm_centre", "Confirm", class = "btn-primary")
+        )
+      ))
+    }
+  }) |> bindEvent(input$main_nav)
+  
+  # Handle the confirmation
+  observeEvent(input$confirm_centre, {
+    if (input$selected_centre != "") {
+      removeModal()
+      # You can now use input$selected_centre in your app
+      showNotification(paste("Selected:", input$selected_centre), type = "message")
+    } else {
+      showNotification("Please select a transplant centre", type = "warning")
+    }
+  })
+  
+  
   # pop-up to show factors that have not been considered
   modal_confirm <- modalDialog(
     factors_not_included,
@@ -178,7 +211,8 @@ server <- function(input, output) {
     footer = tagList(
       actionButton("ok", "OK", class = "btn btn-success")
     )
-  )
+  ) 
+  
   observeEvent(input$factors, {
     showModal(modal_confirm)
   })
