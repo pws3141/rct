@@ -64,8 +64,14 @@ ui <- withMathJax(page_navbar(
                 source(file.path("pages/kidney_waiting_time_ui.R"), local = TRUE)$value,
                 icon = bsicons::bs_icon("clock-history")
       ), # nav_panel kidney WT
-      nav_panel("How long might the kindey last?", "TODO"),
-      nav_panel("How long might the patient survive?", "TODO")
+      nav_panel("How long might the kindey last?", 
+                source(file.path("pages/kidney_survival_ui.R"), local = TRUE)$value,
+                icon = bsicons::bs_icon("calendar")
+      ), # nav_panel kidney survival               
+      nav_panel("How long might the patient survive?",
+                source(file.path("pages/patient_survival_ui.R"), local = TRUE)$value,
+                icon = bsicons::bs_icon("person-walking")
+      ), # nav_panel kidney survival               
     ), # navset_card_tab
     icon = bsicons::bs_icon("activity"),
   ), # nav_panel
@@ -80,7 +86,7 @@ ui <- withMathJax(page_navbar(
 ) 
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   # Data reactives
   source(file.path("server/kidney_data.R"), local = TRUE)$value
   
@@ -124,6 +130,8 @@ server <- function(input, output) {
   
   # Get content for individual pages
   source(file.path("pages/kidney_waiting_time_server.R"), local = TRUE)$value
+  source(file.path("pages/kidney_survival_server.R"), local = TRUE)$value
+  source(file.path("pages/patient_survival_server.R"), local = TRUE)$value
   
   
 } # server

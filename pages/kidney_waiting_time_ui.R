@@ -1,12 +1,12 @@
 layout_sidebar(
   sidebar = sidebar(
-    title = "Kidney Waiting Times",
-    h4("Enter details about the patient"),
+    #title = "Kidney Waiting Times",
+    title = "Enter details about the patient",
+    #h4("Enter details about the patient"),
     # Informational text
     p("Other things might influence these results, for example other health conditions."),
-    p("The tool cannot take into account all these factors."),
-    p("The tool uses data collected by NHSBT. Some data that is collected has not been used in the tool."),
-    p("Changes to the kidney offering scheme in September 2019 are not yet reflected in the tool."),
+    p("The tool cannot take into account all these factors.
+      The tool uses data collected by NHSBT. Some data that is collected has not been used in the tool."),
     # create action button with blue background
     actionButton("factors", "Show factors considered but not included",
                  icon = icon("info"), 
