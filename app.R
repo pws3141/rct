@@ -64,7 +64,7 @@ ui <- withMathJax(page_navbar(
                 source(file.path("pages/kidney_waiting_time_ui.R"), local = TRUE)$value,
                 icon = bsicons::bs_icon("clock-history")
       ), # nav_panel kidney WT
-      nav_panel("How long might the kindey last?", 
+      nav_panel("How long might the kidey last?", 
                 source(file.path("pages/kidney_survival_ui.R"), local = TRUE)$value,
                 icon = bsicons::bs_icon("calendar")
       ), # nav_panel kidney survival               
