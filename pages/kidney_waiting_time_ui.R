@@ -52,7 +52,7 @@ layout_sidebar(
     ),
     #
     width = 700
-  ),
+  ), # end sidebar
   # Main content area
   # Informational text
   h2("What might happen if you are listed for a transplant?"),
